@@ -6,6 +6,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -225,5 +226,15 @@ public class UsageHelper {
         Log.d("UsageDebug", "──────────────────────────────");
         Log.d("UsageDebug", "TOTAL → "
                 + (total / 1000 / 60) + "m " + ((total / 1000) % 60) + "s");
+    }
+
+    // Add this method inside UsageHelper.java
+    public static Drawable getAppIcon(Context context, String pkg) {
+        try {
+            return context.getPackageManager().getApplicationIcon(pkg);
+        } catch (PackageManager.NameNotFoundException e) {
+            // App uninstalled — return default android icon
+            return context.getPackageManager().getDefaultActivityIcon();
+        }
     }
 }

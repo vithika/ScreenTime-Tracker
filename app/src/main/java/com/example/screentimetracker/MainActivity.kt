@@ -48,8 +48,10 @@ class MainActivity : AppCompatActivity() {
             val totalMs = UsageHelper.getTodayUsage(this@MainActivity)
 
             val list = ArrayList<AppUsageModel>()
+
             for (info in appList) {
-                list.add(AppUsageModel(info.appName, info.usageTimeMs))
+                val icon = UsageHelper.getAppIcon(this@MainActivity, info.packageName)
+                list.add(AppUsageModel( info.appName, info.usageTimeMs,icon, info.isInstalled))
             }
 
             withContext(Dispatchers.Main) {

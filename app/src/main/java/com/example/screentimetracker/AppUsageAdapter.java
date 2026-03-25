@@ -3,6 +3,7 @@ package com.example.screentimetracker;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,6 +33,18 @@ public class AppUsageAdapter extends RecyclerView.Adapter<AppUsageAdapter.ViewHo
 
         holder.name.setText(model.getAppName());
 
+        if (model.icon != null) {
+            holder.icon.setImageDrawable(model.icon);
+        } else {
+            holder.icon.setImageResource(android.R.drawable.sym_def_app_icon);
+        }
+
+        // Grey out uninstalled apps
+        float alpha = model.isInstalled ? 1.0f : 0.5f;
+        holder.icon.setAlpha(alpha);
+        holder.name.setAlpha(alpha);
+        holder.time.setAlpha(alpha);
+
         long min = model.getTime() / (1000 * 60);
         holder.time.setText(min + " min");
     }
@@ -40,10 +53,12 @@ public class AppUsageAdapter extends RecyclerView.Adapter<AppUsageAdapter.ViewHo
     public int getItemCount() { return list.size(); }
 
     class ViewHolder extends RecyclerView.ViewHolder {
+        ImageView icon;
         TextView name, time;
 
         ViewHolder(View itemView) {
             super(itemView);
+            icon = itemView.findViewById(R.id.ivAppIcon);
             name = itemView.findViewById(R.id.appName);
             time = itemView.findViewById(R.id.time);
         }
