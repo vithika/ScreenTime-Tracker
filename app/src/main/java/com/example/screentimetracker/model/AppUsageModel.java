@@ -8,12 +8,17 @@ public class AppUsageModel {
     public final  Drawable icon;
     public final  boolean isInstalled;
 
+    public  final String category;
 
-    public AppUsageModel(String appName, long time, Drawable icon, boolean isInstalled) {
+
+    public AppUsageModel(String appName, long time, Drawable icon, boolean isInstalled,String category) {
         this.appName = appName;
         this.time = time;
         this.icon = icon;
         this.isInstalled = isInstalled;
+        this.category = category;
+
+
     }
 
     public String getAppName() { return appName; }

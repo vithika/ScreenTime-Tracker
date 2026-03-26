@@ -202,11 +202,13 @@ public class UsageHelper {
                     pkg,
                     getAppName(context, pkg),
                     entry.getValue(),
-                    isAppInstalled(context, pkg)
+                    isAppInstalled(context, pkg),
+                    CategoryHelper.getCategory(context, pkg)
             ));
         }
 
         result.sort((a, b) -> Long.compare(b.usageTimeMs, a.usageTimeMs));
+
         return result;
     }
 
