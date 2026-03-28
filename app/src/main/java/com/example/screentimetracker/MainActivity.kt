@@ -108,12 +108,19 @@ class MainActivity : AppCompatActivity() {
                     else                      -> entertainingList.add(model)// OTHER goes to entertaining
                 }
 
+                productiveList.sortByDescending { info.usageTimeMs }
+                entertainingList.sortByDescending { info.usageTimeMs }
             }
 
 
+
             withContext(Dispatchers.Main) {
-                val minutes = totalMs / (1000 * 60)
-                tvTime.text = "$minutes minutes screen time"
+
+                val totalMinutes = totalMs / (1000 * 60)
+                val hours = totalMinutes / 60
+                val mins = totalMinutes % 60
+                tvTime.text = if (hours > 0) "${hours}h ${mins}m screen time" else "${mins}m screen time"
+
 
            //     recycler.adapter = AppUsageAdapter(list)
                 setupChart(weeklyData, dayLabels)
@@ -131,20 +138,26 @@ class MainActivity : AppCompatActivity() {
             entries.add(BarEntry(i.toFloat(), weeklyData[i]))
         }
 
+        // Color each bar based on usage
+        val maxUsage = weeklyData.max()
+        val colors = weeklyData.map { value ->
+            when {
+                value <= maxUsage * 0.33f -> getColor(R.color.bar_green)  // low
+                value <= maxUsage * 0.66f -> getColor(R.color.bar_yellow) // medium
+                else                      -> getColor(R.color.bar_red)    // high
+            }
+        }
+
         val dataSet = BarDataSet(entries, "Screen Time (mins)").apply {
-            color = getColor(R.color.black)
+            setColors(colors)   // ← per-bar colors
             valueTextSize = 10f
             setDrawValues(true)
         }
 
-        val barData = BarData(dataSet).apply {
-            barWidth = 0.6f
-        }
+        val barData = BarData(dataSet).apply { barWidth = 0.6f }
 
         barChart.apply {
             data = barData
-
-            // X axis — day labels
             xAxis.apply {
                 valueFormatter = IndexAxisValueFormatter(dayLabels)
                 position = XAxis.XAxisPosition.BOTTOM
@@ -152,16 +165,12 @@ class MainActivity : AppCompatActivity() {
                 setDrawGridLines(false)
                 textSize = 11f
             }
-
-            // Y axis
             axisLeft.apply {
                 granularity = 1f
                 axisMinimum = 0f
                 setDrawGridLines(true)
             }
             axisRight.isEnabled = false
-
-            // Chart settings
             description.isEnabled = false
             legend.isEnabled = false
             setTouchEnabled(true)
@@ -170,7 +179,54 @@ class MainActivity : AppCompatActivity() {
             invalidate()
         }
     }
-    private fun hasPermission(): Boolean {
+
+//    private fun setupChart(weeklyData: FloatArray, dayLabels: Array<String>) {
+//        val entries = ArrayList<BarEntry>()
+//        for (i in weeklyData.indices) {
+//            entries.add(BarEntry(i.toFloat(), weeklyData[i]))
+//        }
+//
+//        val dataSet = BarDataSet(entries, "Screen Time (mins)").apply {
+//            color = getColor(R.color.black)
+//            valueTextSize = 10f
+//            setDrawValues(true)
+//        }
+//
+//        val barData = BarData(dataSet).apply {
+//            barWidth = 0.6f
+//        }
+//
+//        barChart.apply {
+//            data = barData
+//
+//            // X axis — day labels
+//            xAxis.apply {
+//                valueFormatter = IndexAxisValueFormatter(dayLabels)
+//                position = XAxis.XAxisPosition.BOTTOM
+//                granularity = 1f
+//                setDrawGridLines(false)
+//                textSize = 11f
+//            }
+//
+//            // Y axis
+//            axisLeft.apply {
+//                granularity = 1f
+//                axisMinimum = 0f
+//                setDrawGridLines(true)
+//            }
+//            axisRight.isEnabled = false
+//
+//            // Chart settings
+//            description.isEnabled = false
+//            legend.isEnabled = false
+//            setTouchEnabled(true)
+//            setPinchZoom(false)
+//            animateY(800)
+//            invalidate()
+//        }
+//    }
+//
+        private fun hasPermission(): Boolean {
         val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = appOps.checkOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,

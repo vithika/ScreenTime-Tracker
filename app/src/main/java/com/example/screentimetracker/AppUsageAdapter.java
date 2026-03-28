@@ -45,8 +45,12 @@ public class AppUsageAdapter extends RecyclerView.Adapter<AppUsageAdapter.ViewHo
         holder.name.setAlpha(alpha);
         holder.time.setAlpha(alpha);
 
-        long min = model.getTime() / (1000 * 60);
-        holder.time.setText(min + " min");
+
+        long totalMinutes = model.getTime() / (1000 * 60);
+        long hours = totalMinutes / 60;
+        long mins = totalMinutes % 60;
+        holder.time.setText(hours > 0 ? hours + "h " + mins + "m" : mins + "m");
+
     }
 
     @Override
