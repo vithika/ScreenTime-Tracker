@@ -19,12 +19,10 @@ object RewardHelper {
         val earned  = productiveMin   * POINTS_PER_MIN_PRODUCTIVE
         val deducted = entertainingMin * POINTS_PER_MIN_ENTERTAINING
 
-        Log.d("RewardDebug", "productiveMin=$productiveMin earned=$earned")
-        Log.d("RewardDebug", "entertainingMin=$entertainingMin deducted=$deducted")
-        Log.d("RewardDebug", "total before clamp=${earned - deducted}")
+
 
         val total = (earned - deducted) // never go below 0
-        Log.d("RewardDebug", "final points=$total")
+
         savePoints(context, total.toInt())
     }
 

@@ -7,7 +7,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -132,7 +131,7 @@ class MainActivity : AppCompatActivity() {
                 val category = CategoryHelper.getCategory(this@MainActivity, info.packageName)
                 val model    = AppUsageModel(info.appName, info.usageTimeMs, icon, info.isInstalled,category)
 
-                Log.d("category",category)
+
                 list.add(model)
 
                 when (category) {
@@ -141,15 +140,6 @@ class MainActivity : AppCompatActivity() {
                     in entertainingCategories -> entertainingList.add(model)
                     else                      -> entertainingList.add(model)// OTHER goes to entertaining
                 }
-
-
-
-                // After your for loop, add these
-
-
-                Log.d("RewardDebug", "Productive minutes:   $totalProductiveMs")
-                Log.d("RewardDebug", "Entertaining minutes: $totalEntertainingMs")
-                Log.d("RewardDebug", "Expected points: ${(totalProductiveMs ) - totalEntertainingMs}")
 
             }
             productiveList.sortByDescending { it.time }
