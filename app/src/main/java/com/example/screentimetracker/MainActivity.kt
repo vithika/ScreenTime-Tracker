@@ -4,6 +4,7 @@ package com.example.screentimetracker
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -31,6 +32,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerEntertaining: RecyclerView
     private lateinit var barChart: BarChart
 
+    private val PREFS = "screen_time_prefs"
+    private val KEY_GOAL = "daily_goal_minutes"
+
+    private lateinit var tvPoints: TextView
+    private lateinit var tvBadge: TextView
+    private lateinit var tvProductivePoints: TextView
+    private lateinit var tvEntertainingPoints: TextView
+
+
 
 
     private val productiveCategories = setOf(
@@ -56,6 +66,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        NotificationHelper.createChannel(this)
 
         tvTime = findViewById(R.id.tvTime)
         barChart = findViewById(R.id.barChart)
@@ -65,7 +76,26 @@ class MainActivity : AppCompatActivity() {
         recycler.layoutManager = LinearLayoutManager(this)
         recyclerProductive.layoutManager = LinearLayoutManager(this)   // ← add this
         recyclerEntertaining.layoutManager = LinearLayoutManager(this) // ← add this
+        tvPoints             = findViewById(R.id.tvPoints)
+        tvBadge              = findViewById(R.id.tvBadge)
+        tvProductivePoints   = findViewById(R.id.tvProductivePoints)
+        tvEntertainingPoints = findViewById(R.id.tvEntertainingPoints)
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                    101
+                )
+            }
+        }
+
+
+// Goal button — add a button in your XML with id btnSetGoal
+        findViewById<android.widget.Button>(R.id.btnSetGoal).setOnClickListener {
+            showGoalDialog()
+        }
         if (!hasPermission()) {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         } else {
@@ -88,10 +118,14 @@ class MainActivity : AppCompatActivity() {
             val weeklyData = WeeklyStatsHelper.getLast7DaysUsage(this@MainActivity)
             val dayLabels = WeeklyStatsHelper.getDayLabels()
 
+            var totalProductiveMs = 0L;
+            var totalEntertainingMs = 0L;
+
             val list = ArrayList<AppUsageModel>()
 
             val productiveList    = ArrayList<AppUsageModel>()
             val entertainingList  = ArrayList<AppUsageModel>()
+
 
             for (info in appList) {
                 val icon = UsageHelper.getAppIcon(this@MainActivity, info.packageName)
@@ -108,25 +142,65 @@ class MainActivity : AppCompatActivity() {
                     else                      -> entertainingList.add(model)// OTHER goes to entertaining
                 }
 
-                productiveList.sortByDescending { info.usageTimeMs }
-                entertainingList.sortByDescending { info.usageTimeMs }
+
+
+                // After your for loop, add these
+
+
+                Log.d("RewardDebug", "Productive minutes:   $totalProductiveMs")
+                Log.d("RewardDebug", "Entertaining minutes: $totalEntertainingMs")
+                Log.d("RewardDebug", "Expected points: ${(totalProductiveMs ) - totalEntertainingMs}")
+
             }
+            productiveList.sortByDescending { it.time }
+            entertainingList.sortByDescending { it.time }
 
-
+            totalProductiveMs   = productiveList.sumOf  { it.time }
+            totalEntertainingMs = entertainingList.sumOf { it.time }
 
             withContext(Dispatchers.Main) {
 
                 val totalMinutes = totalMs / (1000 * 60)
+                val goalMinutes = getGoalMinutes()
                 val hours = totalMinutes / 60
                 val mins = totalMinutes % 60
+
+
                 tvTime.text = if (hours > 0) "${hours}h ${mins}m screen time" else "${mins}m screen time"
 
+                if (totalMinutes >= goalMinutes) {
+                    NotificationHelper.sendGoalExceededNotification(this@MainActivity, goalMinutes)
+                }
 
            //     recycler.adapter = AppUsageAdapter(list)
                 setupChart(weeklyData, dayLabels)
 
                 recyclerProductive.adapter   = AppUsageAdapter(productiveList)
                 recyclerEntertaining.adapter = AppUsageAdapter(entertainingList)
+
+
+                // Calculate and display points
+                RewardHelper.calculateAndSavePoints(
+                    this@MainActivity,
+                    totalProductiveMs,
+                    totalEntertainingMs
+                )
+                // In MainActivity, just pass the raw Ms values directly
+                RewardHelper.calculateAndSavePoints(this@MainActivity, totalProductiveMs, totalEntertainingMs)
+
+                val points = RewardHelper.getPoints(this@MainActivity)
+                val badge  = RewardHelper.getBadge(points)
+
+                val productiveMin   = totalProductiveMs   / (1000 * 60)
+                val entertainingMin = totalEntertainingMs / (1000 * 60)
+
+                tvPoints.text             = "$points points today"
+                tvBadge.text              = badge
+                tvProductivePoints.text   = "+${productiveMin * 1} from productive"
+                tvEntertainingPoints.text = "-${entertainingMin} from entertaining"
+
+
+
             }
         }
     }
@@ -234,6 +308,34 @@ class MainActivity : AppCompatActivity() {
             packageName
         )
         return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    private fun getGoalMinutes(): Int {
+        return getSharedPreferences(PREFS, MODE_PRIVATE).getInt(KEY_GOAL, 120) // default 2 hours
+    }
+
+    private fun saveGoalMinutes(minutes: Int) {
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(KEY_GOAL, minutes).apply()
+    }
+
+    private fun showGoalDialog() {
+        val input = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            hint = "Enter goal in minutes"
+            setText(getGoalMinutes().toString())
+        }
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Set Daily Screen Time Goal")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val goal = input.text.toString().toIntOrNull()
+                if (goal != null && goal > 0) {
+                    saveGoalMinutes(goal)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }
 

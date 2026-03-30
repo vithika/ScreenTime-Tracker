@@ -20,6 +20,71 @@
             android:textColor="#1A1A1A"
             android:layout_marginBottom="16dp"/>
 
+        <!-- Points Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#FFFFFF"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="4dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvPoints"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A1A"/>
+
+                <TextView
+                    android:id="@+id/tvBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:layout_marginTop="4dp"/>
+
+            </LinearLayout>
+
+            <!-- Points breakdown -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/tvProductivePoints"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#4CAF50"
+                    android:textSize="14sp"/>
+
+                <TextView
+                    android:id="@+id/tvEntertainingPoints"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F44336"
+                    android:textSize="14sp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSetGoal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set Daily Goal"
+            android:layout_marginBottom="16dp"/>
         <!-- Bar Chart -->
         <com.github.mikephil.charting.charts.BarChart
             android:id="@+id/barChart"
@@ -103,4 +168,3 @@
 
     </LinearLayout>
 </ScrollView>
-  
