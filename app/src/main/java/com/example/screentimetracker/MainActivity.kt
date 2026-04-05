@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -46,8 +47,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvStreak: TextView
     private lateinit var tvStreakEmoji: TextView
     private lateinit var tvBestStreak: TextView
-
     private lateinit var pieChart: PieChart
+    private lateinit var ivTopProductiveIcon: ImageView
+    private lateinit var tvTopProductiveName: TextView
+    private lateinit var tvTopProductiveTime: TextView
+    private lateinit var ivTopEntertainingIcon: ImageView
+    private lateinit var tvTopEntertainingName: TextView
+    private lateinit var tvTopEntertainingTime: TextView
 
 
 
@@ -93,6 +99,12 @@ class MainActivity : AppCompatActivity() {
         tvStreakEmoji = findViewById(R.id.tvStreakEmoji)
         tvBestStreak  = findViewById(R.id.tvBestStreak)
         pieChart             = findViewById(R.id.pieChart)
+        ivTopProductiveIcon   = findViewById(R.id.ivTopProductiveIcon)
+        tvTopProductiveName   = findViewById(R.id.tvTopProductiveName)
+        tvTopProductiveTime   = findViewById(R.id.tvTopProductiveTime)
+        ivTopEntertainingIcon = findViewById(R.id.ivTopEntertainingIcon)
+        tvTopEntertainingName = findViewById(R.id.tvTopEntertainingName)
+        tvTopEntertainingTime = findViewById(R.id.tvTopEntertainingTime)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -145,8 +157,10 @@ class MainActivity : AppCompatActivity() {
             val productiveList    = ArrayList<AppUsageModel>()
             val entertainingList  = ArrayList<AppUsageModel>()
 
-
+            var topProductiveModel:   AppUsageModel? = null
+            var topEntertainingModel: AppUsageModel? = null
             for (info in appList) {
+
                 val icon = UsageHelper.getAppIcon(this@MainActivity, info.packageName)
                 val category = CategoryHelper.getCategory(this@MainActivity, info.packageName)
                 val model    = AppUsageModel(info.appName, info.usageTimeMs, icon, info.isInstalled,category)
@@ -156,8 +170,17 @@ class MainActivity : AppCompatActivity() {
 
                 when (category) {
 
-                    in productiveCategories   -> productiveList.add(model)
-                    in entertainingCategories -> entertainingList.add(model)
+                    in productiveCategories   ->{  productiveList.add(model)
+                        if (topProductiveModel == null ||
+                            info.usageTimeMs > (topProductiveModel?.time ?: 0)) {
+                            topProductiveModel = model
+                        }
+                    }
+                    in entertainingCategories -> {entertainingList.add(model)
+                        if (topEntertainingModel == null ||
+                            info.usageTimeMs > (topEntertainingModel?.time ?: 0)) {
+                            topEntertainingModel = model
+                        }}
                     else                      -> entertainingList.add(model)
                 }
 
@@ -230,6 +253,32 @@ class MainActivity : AppCompatActivity() {
 
 
                 updateWidget()
+
+                // Trophy card — top productive app
+                topProductiveModel?.let { top ->
+                    tvTopProductiveName.text = top.appName
+                    val mins  = top.time / (1000 * 60)
+                    val hours = mins / 60
+                    val rem   = mins % 60
+                    tvTopProductiveTime.text = if (hours > 0) "${hours}h ${rem}m" else "${mins}m"
+                    top.icon?.let { ivTopProductiveIcon.setImageDrawable(it) }
+                } ?: run {
+                    tvTopProductiveName.text = "No data"
+                    tvTopProductiveTime.text = ""
+                }
+
+// Trophy card — top entertaining app
+                topEntertainingModel?.let { top ->
+                    tvTopEntertainingName.text = top.appName
+                    val mins  = top.time / (1000 * 60)
+                    val hours = mins / 60
+                    val rem   = mins % 60
+                    tvTopEntertainingTime.text = if (hours > 0) "${hours}h ${rem}m" else "${mins}m"
+                    top.icon?.let { ivTopEntertainingIcon.setImageDrawable(it) }
+                } ?: run {
+                    tvTopEntertainingName.text = "No data"
+                    tvTopEntertainingTime.text = ""
+                }
 
             }
         }
