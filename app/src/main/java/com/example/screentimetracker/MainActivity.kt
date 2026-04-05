@@ -39,6 +39,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvProductivePoints: TextView
     private lateinit var tvEntertainingPoints: TextView
 
+    private lateinit var tvStreak: TextView
+    private lateinit var tvStreakEmoji: TextView
+    private lateinit var tvBestStreak: TextView
+
 
 
 
@@ -79,6 +83,9 @@ class MainActivity : AppCompatActivity() {
         tvBadge              = findViewById(R.id.tvBadge)
         tvProductivePoints   = findViewById(R.id.tvProductivePoints)
         tvEntertainingPoints = findViewById(R.id.tvEntertainingPoints)
+        tvStreak      = findViewById(R.id.tvStreak)
+        tvStreakEmoji = findViewById(R.id.tvStreakEmoji)
+        tvBestStreak  = findViewById(R.id.tvBestStreak)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -169,27 +176,44 @@ class MainActivity : AppCompatActivity() {
                 recyclerEntertaining.adapter = AppUsageAdapter(entertainingList)
 
 
-                // Calculate and display points
-                RewardHelper.calculateAndSavePoints(
-                    this@MainActivity,
-                    totalProductiveMs,
-                    totalEntertainingMs
-                )
-                // In MainActivity, just pass the raw Ms values directly
+
+                // 1. Calculate and SAVE points first
                 RewardHelper.calculateAndSavePoints(this@MainActivity, totalProductiveMs, totalEntertainingMs)
 
+                // 2. NOW read the saved points
                 val points = RewardHelper.getPoints(this@MainActivity)
+
+                // 3. THEN update streak using the fresh points
+                StreakHelper.updateStreak(this@MainActivity, points)
+
+                // 4. Read streak values
+                val currentStreak = StreakHelper.getStreak(this@MainActivity)
+                val bestStreak    = StreakHelper.getBestStreak(this@MainActivity)
+                val streakEmoji   = StreakHelper.getStreakEmoji(currentStreak)
+
+                // 5. Update UI
+                tvStreak.text      = "$currentStreak days"
+                tvStreakEmoji.text = streakEmoji
+                tvBestStreak.text  = "$bestStreak days"
+                tvPoints.text = "$points points today"
+
+
                 val badge  = RewardHelper.getBadge(points)
 
                 val productiveMin   = totalProductiveMs   / (1000 * 60)
                 val entertainingMin = totalEntertainingMs / (1000 * 60)
 
-                tvPoints.text             = "$points points today"
+
                 tvBadge.text              = badge
-                tvProductivePoints.text   = "+${productiveMin * 1} from productive"
                 tvEntertainingPoints.text = "-${entertainingMin} from entertaining"
+                tvProductivePoints.text = if (points > 0) {
+                    "+${productiveMin * 1} from productive"
+                } else {
+                    "Need ${StreakHelper.getPointsGoal()} pts to keep streak"
+                }
 
 
+                updateWidget()
 
             }
         }
@@ -244,52 +268,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-//    private fun setupChart(weeklyData: FloatArray, dayLabels: Array<String>) {
-//        val entries = ArrayList<BarEntry>()
-//        for (i in weeklyData.indices) {
-//            entries.add(BarEntry(i.toFloat(), weeklyData[i]))
-//        }
-//
-//        val dataSet = BarDataSet(entries, "Screen Time (mins)").apply {
-//            color = getColor(R.color.black)
-//            valueTextSize = 10f
-//            setDrawValues(true)
-//        }
-//
-//        val barData = BarData(dataSet).apply {
-//            barWidth = 0.6f
-//        }
-//
-//        barChart.apply {
-//            data = barData
-//
-//            // X axis — day labels
-//            xAxis.apply {
-//                valueFormatter = IndexAxisValueFormatter(dayLabels)
-//                position = XAxis.XAxisPosition.BOTTOM
-//                granularity = 1f
-//                setDrawGridLines(false)
-//                textSize = 11f
-//            }
-//
-//            // Y axis
-//            axisLeft.apply {
-//                granularity = 1f
-//                axisMinimum = 0f
-//                setDrawGridLines(true)
-//            }
-//            axisRight.isEnabled = false
-//
-//            // Chart settings
-//            description.isEnabled = false
-//            legend.isEnabled = false
-//            setTouchEnabled(true)
-//            setPinchZoom(false)
-//            animateY(800)
-//            invalidate()
-//        }
-//    }
-//
+    private fun updateWidget() {
+        val manager = android.appwidget.AppWidgetManager.getInstance(this)
+        val ids = manager.getAppWidgetIds(
+            android.content.ComponentName(this, ScreenTimeWidget::class.java)
+        )
+        for (id in ids) {
+            ScreenTimeWidget.updateWidget(this, manager, id)
+        }
+    }
         private fun hasPermission(): Boolean {
         val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = appOps.checkOpNoThrow(
