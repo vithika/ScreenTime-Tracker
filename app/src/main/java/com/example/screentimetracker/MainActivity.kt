@@ -52,6 +52,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var ivTopEntertainingIcon: ImageView
     private lateinit var tvTopEntertainingName: TextView
     private lateinit var tvTopEntertainingTime: TextView
+    private lateinit var tvFirstPickup: TextView
+
+    private lateinit var tvScreenFree: TextView
+    private lateinit var tvThisWeek: TextView
+    private lateinit var tvLastWeek: TextView
+    private lateinit var tvWeeklyArrow: TextView
+    private lateinit var tvWeeklyDiff: TextView
 
 
 
@@ -98,6 +105,14 @@ class MainActivity : AppCompatActivity() {
         ivTopEntertainingIcon = findViewById(R.id.ivTopEntertainingIcon)
         tvTopEntertainingName = findViewById(R.id.tvTopEntertainingName)
         tvTopEntertainingTime = findViewById(R.id.tvTopEntertainingTime)
+        tvFirstPickup = findViewById(R.id.tvFirstPickup)
+        tvScreenFree = findViewById(R.id.tvScreenFree)
+        tvThisWeek    = findViewById(R.id.tvThisWeek)
+        tvLastWeek    = findViewById(R.id.tvLastWeek)
+        tvWeeklyArrow = findViewById(R.id.tvWeeklyArrow)
+        tvWeeklyDiff  = findViewById(R.id.tvWeeklyDiff)
+
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -140,6 +155,11 @@ class MainActivity : AppCompatActivity() {
             val totalMs = UsageHelper.getTodayUsage(this@MainActivity)
             val weeklyData = WeeklyStatsHelper.getLast7DaysUsage(this@MainActivity)
             val dayLabels = WeeklyStatsHelper.getDayLabels()
+            val lastWeekData   = WeeklyStatsHelper.getLastWeekUsage(this@MainActivity)
+            val thisWeekAvg    = WeeklyStatsHelper.getWeeklyAverage(weeklyData)
+            val lastWeekAvg    = WeeklyStatsHelper.getWeeklyAverage(lastWeekData)
+            val firstPickup  = UsageHelper.getFirstPickupTime(this@MainActivity)
+            val screenFree   = UsageHelper.getScreenFreeTime(this@MainActivity, totalMs) // ← add
 
             var totalProductiveMs = 0L;
             var totalEntertainingMs = 0L;
@@ -193,7 +213,10 @@ class MainActivity : AppCompatActivity() {
                 val mins = totalMinutes % 60
 
 
+
                 tvTime.text = if (hours > 0) "${hours}h ${mins}m screen time" else "${mins}m screen time"
+                tvFirstPickup.text = firstPickup
+                tvScreenFree.text  = screenFree
 
                 if (totalMinutes >= goalMinutes) {
                     NotificationHelper.sendGoalExceededNotification(this@MainActivity, goalMinutes)
@@ -228,6 +251,31 @@ class MainActivity : AppCompatActivity() {
                 tvBestStreak.text  = "$bestStreak days"
                 tvPoints.text = "$points points today"
 
+
+                // Weekly comparison
+                tvThisWeek.text = WeeklyStatsHelper.formatMinutes(thisWeekAvg)
+                tvLastWeek.text = WeeklyStatsHelper.formatMinutes(lastWeekAvg)
+
+                val diff = thisWeekAvg - lastWeekAvg
+                when {
+                    diff > 0 -> {
+                        // More screen time this week = bad
+                        tvWeeklyArrow.text = "📈"
+                        tvWeeklyDiff.text  = "+${WeeklyStatsHelper.formatMinutes(diff)}"
+                        tvWeeklyDiff.setTextColor(getColor(R.color.bar_red))
+                    }
+                    diff < 0 -> {
+                        // Less screen time this week = good
+                        tvWeeklyArrow.text = "📉"
+                        tvWeeklyDiff.text  = "-${WeeklyStatsHelper.formatMinutes(-diff)}"
+                        tvWeeklyDiff.setTextColor(getColor(R.color.bar_green))
+                    }
+                    else -> {
+                        tvWeeklyArrow.text = "➡️"
+                        tvWeeklyDiff.text  = "Same"
+                        tvWeeklyDiff.setTextColor(getColor(android.R.color.darker_gray))
+                    }
+                }
 
                 val badge  = RewardHelper.getBadge(points)
 

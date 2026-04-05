@@ -1,6 +1,7 @@
 package com.example.screentimetracker;
 
 import android.app.usage.UsageEvents;
+import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -8,7 +9,10 @@ import android.content.pm.PackageManager;
 
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class WeeklyStatsHelper {
@@ -150,4 +154,72 @@ public class WeeklyStatsHelper {
 
         return labels;
     }
+    public static float[] getLastWeekUsage(Context context) {
+        UsageStatsManager usm =
+                (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+
+        Calendar calendar = Calendar.getInstance();
+
+        // End = start of this week (last Monday midnight)
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+        long endTime = calendar.getTimeInMillis();
+
+        // Start = 7 days before end
+        long startTime = endTime - 7L * 24 * 60 * 60 * 1000;
+
+        List<UsageStats> stats = usm.queryUsageStats(
+                UsageStatsManager.INTERVAL_DAILY, startTime, endTime);
+
+        Map<Integer, Long> dailyMap = new HashMap<>();
+        Calendar cal = Calendar.getInstance();
+
+        if (stats != null) {
+            for (UsageStats stat : stats) {
+                cal.setTimeInMillis(stat.getFirstTimeStamp());
+                int dayOfYear = cal.get(Calendar.DAY_OF_YEAR);
+                long prev = dailyMap.containsKey(dayOfYear)
+                        ? dailyMap.get(dayOfYear) : 0L;
+                dailyMap.put(dayOfYear, prev + stat.getTotalTimeInForeground());
+            }
+        }
+
+        // Build 7-day array starting from last Monday
+        float[] result = new float[7];
+        Calendar dayCal = Calendar.getInstance();
+        dayCal.setTimeInMillis(startTime);
+
+        for (int i = 0; i < 7; i++) {
+            int dayOfYear = dayCal.get(Calendar.DAY_OF_YEAR);
+            long ms = dailyMap.containsKey(dayOfYear) ? dailyMap.get(dayOfYear) : 0L;
+            result[i] = ms / (1000f * 60f);
+            dayCal.add(Calendar.DAY_OF_YEAR, 1);
+        }
+
+        return result;
+    }
+    public static float getWeeklyAverage(float[] data) {
+        float sum   = 0;
+        int   count = 0;
+        for (float val : data) {
+            if (val > 0) {
+                sum += val;
+                count++;
+            }
+        }
+        return count == 0 ? 0f : sum / count;
+    }
+
+    // Format minutes → "Xh Ym" or "Ym"
+    public static String formatMinutes(float minutes) {
+        int total = (int) minutes;
+        int h     = total / 60;
+        int m     = total % 60;
+        return h > 0 ? h + "h " + m + "m" : m + "m";
+    }
+
+
 }

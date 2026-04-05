@@ -76,6 +76,8 @@ public class AppUsageAdapter extends RecyclerView.Adapter<AppUsageAdapter.ViewHo
     @Override
     public int getItemCount() { return list.size(); }
 
+
+
     class ViewHolder extends RecyclerView.ViewHolder {
         ImageView icon;
         TextView name, time,percentage;

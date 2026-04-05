@@ -239,4 +239,64 @@ public class UsageHelper {
             return context.getPackageManager().getDefaultActivityIcon();
         }
     }
+
+    public static String getFirstPickupTime(Context context) {
+
+
+
+        UsageStatsManager usm =
+                (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+
+        long[] range = getStartEndTime();
+        long startTime = range[0];
+        long endTime   = range[1];
+
+        UsageEvents events = usm.queryEvents(startTime, endTime);
+        UsageEvents.Event event = new UsageEvents.Event();
+
+        long firstEventTime = -1;
+
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event);
+
+            String pkg = event.getPackageName();
+
+            if (pkg.equals(context.getPackageName())) continue;
+
+            if (event.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                firstEventTime = event.getTimeStamp();
+                break; // first foreground event of the day
+            }
+        }
+
+        if (firstEventTime == -1) return "No pickups yet";
+
+        // Format as HH:MM AM/PM
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault());
+        return sdf.format(new java.util.Date(firstEventTime));
+    }
+
+    public static String getScreenFreeTime(Context context, long totalUsageMs) {
+        try {
+            // Get time elapsed since midnight
+            long[] range = getStartEndTime();
+            long startTime = range[0];
+            long now       = range[1];
+
+            long elapsedMs  = now - startTime;         // time since midnight
+            long freeMs     = elapsedMs - totalUsageMs; // subtract screen on time
+
+            if (freeMs < 0) freeMs = 0;
+
+            long freeMinutes = freeMs / (1000 * 60);
+            long hours       = freeMinutes / 60;
+            long mins        = freeMinutes % 60;
+
+            return hours > 0 ? hours + "h " + mins + "m" : mins + "m";
+
+        } catch (Exception e) {
+            return "—";
+        }
+    }
 }
