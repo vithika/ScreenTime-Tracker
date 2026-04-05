@@ -31,9 +31,7 @@ import kotlinx.coroutines.withContext
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tvTime: TextView
-    private lateinit var recycler: RecyclerView
-    private lateinit var recyclerProductive: RecyclerView
-    private lateinit var recyclerEntertaining: RecyclerView
+
     private lateinit var barChart: BarChart
 
     private val PREFS = "screen_time_prefs"
@@ -85,12 +83,7 @@ class MainActivity : AppCompatActivity() {
 
         tvTime = findViewById(R.id.tvTime)
         barChart = findViewById(R.id.barChart)
-        recycler = findViewById(R.id.recycler)
-        recyclerProductive  = findViewById(R.id.recyclerProductive)
-        recyclerEntertaining= findViewById(R.id.recyclerEntertaining)
-        recycler.layoutManager = LinearLayoutManager(this)
-        recyclerProductive.layoutManager = LinearLayoutManager(this)   // ← add this
-        recyclerEntertaining.layoutManager = LinearLayoutManager(this) // ← add this
+
         tvPoints             = findViewById(R.id.tvPoints)
         tvBadge              = findViewById(R.id.tvBadge)
         tvProductivePoints   = findViewById(R.id.tvProductivePoints)
@@ -211,8 +204,7 @@ class MainActivity : AppCompatActivity() {
 
                 setupPieChart(totalProductiveMs, totalEntertainingMs)
 
-                recyclerProductive.adapter   = AppUsageAdapter(productiveList,totalMs)
-                recyclerEntertaining.adapter = AppUsageAdapter(entertainingList,totalMs)
+
 
 
 
