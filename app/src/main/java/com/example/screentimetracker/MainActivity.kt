@@ -130,6 +130,8 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
 
             val appList = UsageHelper.getAppUsageList(this@MainActivity)
+
+
             val totalMs = UsageHelper.getTodayUsage(this@MainActivity)
             val weeklyData = WeeklyStatsHelper.getLast7DaysUsage(this@MainActivity)
             val dayLabels = WeeklyStatsHelper.getDayLabels()
@@ -186,8 +188,8 @@ class MainActivity : AppCompatActivity() {
 
                 setupPieChart(totalProductiveMs, totalEntertainingMs)
 
-                recyclerProductive.adapter   = AppUsageAdapter(productiveList)
-                recyclerEntertaining.adapter = AppUsageAdapter(entertainingList)
+                recyclerProductive.adapter   = AppUsageAdapter(productiveList,totalMs)
+                recyclerEntertaining.adapter = AppUsageAdapter(entertainingList,totalMs)
 
 
 

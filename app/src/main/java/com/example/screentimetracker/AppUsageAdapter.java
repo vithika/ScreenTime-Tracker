@@ -1,5 +1,6 @@
 package com.example.screentimetracker;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,9 +16,11 @@ import java.util.List;
 public class AppUsageAdapter extends RecyclerView.Adapter<AppUsageAdapter.ViewHolder> {
 
     List<AppUsageModel> list;
+    long totalMs;
 
-    public AppUsageAdapter(List<AppUsageModel> list) {
+    public AppUsageAdapter(List<AppUsageModel> list, long totalMs) {
         this.list = list;
+        this.totalMs = totalMs;
     }
 
     @Override
@@ -44,6 +47,7 @@ public class AppUsageAdapter extends RecyclerView.Adapter<AppUsageAdapter.ViewHo
         holder.icon.setAlpha(alpha);
         holder.name.setAlpha(alpha);
         holder.time.setAlpha(alpha);
+        holder.percentage.setAlpha(alpha);
 
 
         long totalMinutes = model.getTime() / (1000 * 60);
@@ -51,6 +55,22 @@ public class AppUsageAdapter extends RecyclerView.Adapter<AppUsageAdapter.ViewHo
         long mins = totalMinutes % 60;
         holder.time.setText(hours > 0 ? hours + "h " + mins + "m" : mins + "m");
 
+
+        if (totalMs > 0) {
+            double pct = (model.getTime() * 100.0) / totalMs;
+            holder.percentage.setText(String.format("%.1f%%", pct));
+
+            // Color code
+            if (pct >= 30) {
+                holder.percentage.setTextColor(Color.parseColor("#F44336")); // red
+            } else if (pct >= 15) {
+                holder.percentage.setTextColor(Color.parseColor("#FFC107")); // yellow
+            } else {
+                holder.percentage.setTextColor(Color.parseColor("#4CAF50")); // green
+            }
+        } else {
+            holder.percentage.setText("0%");
+        }
     }
 
     @Override
@@ -58,13 +78,14 @@ public class AppUsageAdapter extends RecyclerView.Adapter<AppUsageAdapter.ViewHo
 
     class ViewHolder extends RecyclerView.ViewHolder {
         ImageView icon;
-        TextView name, time;
+        TextView name, time,percentage;
 
         ViewHolder(View itemView) {
             super(itemView);
             icon = itemView.findViewById(R.id.ivAppIcon);
             name = itemView.findViewById(R.id.appName);
             time = itemView.findViewById(R.id.time);
+            percentage = itemView.findViewById(R.id.tvPercentage); // ← add this
         }
     }
 }

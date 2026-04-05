@@ -48,6 +48,7 @@ class DetailsActivity : AppCompatActivity() {
     private fun loadData() {
         lifecycleScope.launch(Dispatchers.IO) {
             val appList          = UsageHelper.getAppUsageList(this@DetailsActivity)
+            val totalMs = UsageHelper.getTodayUsage(this@DetailsActivity)
             val productiveList   = ArrayList<AppUsageModel>()
             val entertainingList = ArrayList<AppUsageModel>()
 
@@ -67,8 +68,8 @@ class DetailsActivity : AppCompatActivity() {
             entertainingList.sortByDescending { it.time }
 
             withContext(Dispatchers.Main) {
-                recyclerProductive.adapter   = AppUsageAdapter(productiveList)
-                recyclerEntertaining.adapter = AppUsageAdapter(entertainingList)
+                recyclerProductive.adapter   = AppUsageAdapter(productiveList,totalMs)
+                recyclerEntertaining.adapter = AppUsageAdapter(entertainingList,totalMs)
             }
         }
     }
