@@ -168,12 +168,38 @@
             android:layout_height="wrap_content"
             android:text="Set Daily Goal"
             android:layout_marginBottom="16dp"/>
+
+
+        <Button
+            android:id="@+id/btnDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📋 View App Details"
+            android:layout_marginBottom="8dp"/>
+
         <!-- Bar Chart -->
         <com.github.mikephil.charting.charts.BarChart
             android:id="@+id/barChart"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:layout_marginBottom="24dp"/>
+
+
+        <!-- Pie Chart -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📊 Category Breakdown"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#1A1A1A"
+            android:layout_marginBottom="8dp"/>
+
+        <com.github.mikephil.charting.charts.PieChart
+            android:id="@+id/pieChart"
+            android:layout_width="match_parent"
+            android:layout_height="280dp"
+            android:layout_marginBottom="16dp"/>
 
         <!-- Two Column Layout -->
         <LinearLayout

@@ -25,6 +25,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".DetailsActivity"
+            android:exported="false"/>
         <receiver
             android:name=".ScreenTimeWidget"
             android:exported="true">

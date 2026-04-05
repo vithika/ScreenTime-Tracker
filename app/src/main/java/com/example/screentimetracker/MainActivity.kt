@@ -14,10 +14,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.screentimetracker.model.AppUsageModel
 import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.PieData
+import com.github.mikephil.charting.data.PieDataSet
+import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,6 +46,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvStreak: TextView
     private lateinit var tvStreakEmoji: TextView
     private lateinit var tvBestStreak: TextView
+
+    private lateinit var pieChart: PieChart
 
 
 
@@ -86,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         tvStreak      = findViewById(R.id.tvStreak)
         tvStreakEmoji = findViewById(R.id.tvStreakEmoji)
         tvBestStreak  = findViewById(R.id.tvBestStreak)
-
+        pieChart             = findViewById(R.id.pieChart)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -101,6 +107,10 @@ class MainActivity : AppCompatActivity() {
 // Goal button — add a button in your XML with id btnSetGoal
         findViewById<android.widget.Button>(R.id.btnSetGoal).setOnClickListener {
             showGoalDialog()
+        }
+
+        findViewById<android.widget.Button>(R.id.btnDetails).setOnClickListener {
+            startActivity(Intent(this, DetailsActivity::class.java))
         }
         if (!hasPermission()) {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
@@ -118,14 +128,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadUsageData() {
         lifecycleScope.launch(Dispatchers.IO) {
+
             val appList = UsageHelper.getAppUsageList(this@MainActivity)
             val totalMs = UsageHelper.getTodayUsage(this@MainActivity)
-
             val weeklyData = WeeklyStatsHelper.getLast7DaysUsage(this@MainActivity)
             val dayLabels = WeeklyStatsHelper.getDayLabels()
 
             var totalProductiveMs = 0L;
             var totalEntertainingMs = 0L;
+
 
             val list = ArrayList<AppUsageModel>()
 
@@ -145,8 +156,9 @@ class MainActivity : AppCompatActivity() {
 
                     in productiveCategories   -> productiveList.add(model)
                     in entertainingCategories -> entertainingList.add(model)
-                    else                      -> entertainingList.add(model)// OTHER goes to entertaining
+                    else                      -> entertainingList.add(model)
                 }
+
 
             }
             productiveList.sortByDescending { it.time }
@@ -171,6 +183,8 @@ class MainActivity : AppCompatActivity() {
 
            //     recycler.adapter = AppUsageAdapter(list)
                 setupChart(weeklyData, dayLabels)
+
+                setupPieChart(totalProductiveMs, totalEntertainingMs)
 
                 recyclerProductive.adapter   = AppUsageAdapter(productiveList)
                 recyclerEntertaining.adapter = AppUsageAdapter(entertainingList)
@@ -218,8 +232,45 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    private fun setupPieChart(productiveMs: Long, entertainingMs: Long) {
+        val productiveMin   = (productiveMs   / (1000 * 60)).toFloat()
+        val entertainingMin = (entertainingMs / (1000 * 60)).toFloat()
+
+        val entries = ArrayList<PieEntry>()
+        val colors  = ArrayList<Int>()
+
+        if (productiveMin > 0) {
+            entries.add(PieEntry(productiveMin, "Productive"))
+            colors.add(android.graphics.Color.parseColor("#4CAF50")) // green
+        }
+        if (entertainingMin > 0) {
+            entries.add(PieEntry(entertainingMin, "Entertaining"))
+            colors.add(android.graphics.Color.parseColor("#F44336")) // red
+        }
 
 
+        val dataSet = PieDataSet(entries, "").apply {
+            setColors(colors)              // ← pass the matched colors list
+            valueTextSize  = 13f
+            valueTextColor = android.graphics.Color.WHITE
+            sliceSpace     = 3f
+        }
+
+        pieChart.apply {
+            data = PieData(dataSet)
+            description.isEnabled = false
+            isDrawHoleEnabled     = true
+            holeRadius            = 40f
+            setHoleColor(android.graphics.Color.TRANSPARENT)
+            setCenterText("Today")
+            setCenterTextSize(16f)
+            setEntryLabelColor(android.graphics.Color.WHITE)
+            setEntryLabelTextSize(12f)
+            legend.isEnabled      = true
+            animateY(800)
+            invalidate()
+        }
+    }
     private fun setupChart(weeklyData: FloatArray, dayLabels: Array<String>) {
         val entries = ArrayList<BarEntry>()
         for (i in weeklyData.indices) {
