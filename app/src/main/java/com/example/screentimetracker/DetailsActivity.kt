@@ -14,6 +14,7 @@ class DetailsActivity : AppCompatActivity() {
 
     private lateinit var recyclerProductive: RecyclerView
     private lateinit var recyclerEntertaining: RecyclerView
+    private lateinit var recyclerHeatmap: RecyclerView
 
     private val productiveCategories = setOf(
         AppCategory.EDUCATION, AppCategory.PRODUCTIVITY,
@@ -33,9 +34,13 @@ class DetailsActivity : AppCompatActivity() {
 
         recyclerProductive   = findViewById(R.id.recyclerProductive)
         recyclerEntertaining = findViewById(R.id.recyclerEntertaining)
+        recyclerHeatmap      = findViewById(R.id.recyclerHeatmap)
+
 
         recyclerProductive.layoutManager   = LinearLayoutManager(this)
         recyclerEntertaining.layoutManager = LinearLayoutManager(this)
+        recyclerHeatmap.layoutManager = LinearLayoutManager(this)
+
 
         loadData()
     }
@@ -51,6 +56,7 @@ class DetailsActivity : AppCompatActivity() {
             val totalMs = UsageHelper.getTodayUsage(this@DetailsActivity)
             val productiveList   = ArrayList<AppUsageModel>()
             val entertainingList = ArrayList<AppUsageModel>()
+            val hourlyData       = HourlyUsageHelper.getHourlyUsage(this@DetailsActivity)
 
             for (info in appList) {
                 val icon     = UsageHelper.getAppIcon(this@DetailsActivity, info.packageName)
@@ -70,6 +76,7 @@ class DetailsActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 recyclerProductive.adapter   = AppUsageAdapter(productiveList,totalMs)
                 recyclerEntertaining.adapter = AppUsageAdapter(entertainingList,totalMs)
+                recyclerHeatmap.adapter      = HeatmapAdapter(hourlyData)
             }
         }
     }

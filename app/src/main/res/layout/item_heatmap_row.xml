@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="4dp">
+
+    <!-- Hour label -->
+    <TextView
+        android:id="@+id/tvHourLabel"
+        android:layout_width="52dp"
+        android:layout_height="wrap_content"
+        android:textSize="11sp"
+        android:textColor="#888888"
+        android:gravity="end"
+        android:paddingEnd="8dp"/>
+
+    <!-- Bar -->
+    <View
+        android:id="@+id/viewBar"
+        android:layout_width="0dp"
+        android:layout_height="18dp"
+        android:layout_weight="1"
+        android:background="#4CAF50"/>
+
+    <!-- Time label -->
+    <TextView
+        android:id="@+id/tvHourTime"
+        android:layout_width="52dp"
+        android:layout_height="wrap_content"
+        android:textSize="11sp"
+        android:textColor="#888888"
+        android:paddingStart="8dp"/>
+
+</LinearLayout>

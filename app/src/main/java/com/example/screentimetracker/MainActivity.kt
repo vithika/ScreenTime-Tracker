@@ -225,6 +225,8 @@ class MainActivity : AppCompatActivity() {
            //     recycler.adapter = AppUsageAdapter(list)
                 setupChart(weeklyData, dayLabels)
 
+
+
                 setupPieChart(totalProductiveMs, totalEntertainingMs)
 
 

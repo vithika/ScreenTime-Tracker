@@ -10,6 +10,9 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+
+
+
         <!-- Productive vs Entertaining columns -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -71,6 +74,24 @@
 
             </LinearLayout>
         </LinearLayout>
+
+
+        <!-- Hourly Heatmap -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⏰ Hourly Usage Heatmap"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#1A1A1A"
+            android:layout_marginBottom="8dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerHeatmap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:nestedScrollingEnabled="true"/>
 
     </LinearLayout>
 </ScrollView>
