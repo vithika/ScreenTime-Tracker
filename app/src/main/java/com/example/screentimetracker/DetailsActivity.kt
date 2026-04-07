@@ -1,6 +1,10 @@
 package com.example.screentimetracker
 
 import android.os.Bundle
+import android.view.View
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,6 +19,11 @@ class DetailsActivity : AppCompatActivity() {
     private lateinit var recyclerProductive: RecyclerView
     private lateinit var recyclerEntertaining: RecyclerView
     private lateinit var recyclerHeatmap: RecyclerView
+    private lateinit var loadingOverlay: LinearLayout
+    private lateinit var mainContent: ScrollView
+    private lateinit var tvLoadingMessage: TextView
+    private lateinit var tvLoadingSubMessage: TextView
+
 
     private val productiveCategories = setOf(
         AppCategory.EDUCATION, AppCategory.PRODUCTIVITY,
@@ -40,6 +49,10 @@ class DetailsActivity : AppCompatActivity() {
         recyclerProductive.layoutManager   = LinearLayoutManager(this)
         recyclerEntertaining.layoutManager = LinearLayoutManager(this)
         recyclerHeatmap.layoutManager = LinearLayoutManager(this)
+        loadingOverlay      = findViewById(R.id.loadingOverlay)
+        mainContent         = findViewById(R.id.mainContent)
+        tvLoadingMessage    = findViewById(R.id.tvLoadingMessage)
+        tvLoadingSubMessage = findViewById(R.id.tvLoadingSubMessage)
 
 
         loadData()
@@ -51,6 +64,25 @@ class DetailsActivity : AppCompatActivity() {
     }
 
     private fun loadData() {
+
+        // Show loading, hide content
+        loadingOverlay.alpha= 1f
+        loadingOverlay.visibility = View.VISIBLE
+        mainContent.visibility    = View.GONE
+
+        // Rotate loading messages every second
+        val handler  = android.os.Handler(mainLooper)
+        val messages = LoadingMessages.messages
+        var msgIndex = 0
+
+        val messageRunnable = object : Runnable {
+            override fun run() {
+                tvLoadingSubMessage.text = messages[msgIndex % messages.size]
+                msgIndex++
+                handler.postDelayed(this, 1000)
+            }
+        }
+        handler.post(messageRunnable)
         lifecycleScope.launch(Dispatchers.IO) {
             val appList          = UsageHelper.getAppUsageList(this@DetailsActivity)
             val totalMs = UsageHelper.getTodayUsage(this@DetailsActivity)
@@ -74,9 +106,26 @@ class DetailsActivity : AppCompatActivity() {
             entertainingList.sortByDescending { it.time }
 
             withContext(Dispatchers.Main) {
+
+
+                // Stop rotating messages
+                handler.removeCallbacksAndMessages(null)
                 recyclerProductive.adapter   = AppUsageAdapter(productiveList,totalMs)
                 recyclerEntertaining.adapter = AppUsageAdapter(entertainingList,totalMs)
                 recyclerHeatmap.adapter      = HeatmapAdapter(hourlyData)
+
+
+                mainContent.alpha     = 0f
+                mainContent.visibility = View.VISIBLE
+                mainContent.animate()
+                    .alpha(1f)
+                    .setDuration(600)
+                    .start()
+                loadingOverlay.animate()
+                    .alpha(0f)
+                    .setDuration(600)
+                    .withEndAction { loadingOverlay.visibility = View.GONE }
+                    .start()
             }
         }
     }

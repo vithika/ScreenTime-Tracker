@@ -7,7 +7,11 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
+import android.view.View
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -59,6 +63,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvLastWeek: TextView
     private lateinit var tvWeeklyArrow: TextView
     private lateinit var tvWeeklyDiff: TextView
+    private lateinit var loadingOverlay: LinearLayout
+    private lateinit var mainContent: ScrollView
+    private lateinit var tvLoadingMessage: TextView
+    private lateinit var tvLoadingSubMessage: TextView
 
 
 
@@ -111,6 +119,10 @@ class MainActivity : AppCompatActivity() {
         tvLastWeek    = findViewById(R.id.tvLastWeek)
         tvWeeklyArrow = findViewById(R.id.tvWeeklyArrow)
         tvWeeklyDiff  = findViewById(R.id.tvWeeklyDiff)
+        loadingOverlay      = findViewById(R.id.loadingOverlay)
+        mainContent         = findViewById(R.id.mainContent)
+        tvLoadingMessage    = findViewById(R.id.tvLoadingMessage)
+        tvLoadingSubMessage = findViewById(R.id.tvLoadingSubMessage)
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -147,12 +159,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadUsageData() {
+    loadingOverlay.alpha= 1f
+    loadingOverlay.visibility = View.VISIBLE
+    mainContent.visibility    = View.GONE
+
+    // Rotate loading messages every second
+    val handler  = android.os.Handler(mainLooper)
+    val messages = LoadingMessages.messages
+    var msgIndex = 0
+
+    val messageRunnable = object : Runnable {
+        override fun run() {
+            tvLoadingSubMessage.text = messages[msgIndex % messages.size]
+            msgIndex++
+            handler.postDelayed(this, 1000)
+        }
+    }
+    handler.post(messageRunnable)
         lifecycleScope.launch(Dispatchers.IO) {
 
-            val appList = UsageHelper.getAppUsageList(this@MainActivity)
+
 
 
             val totalMs = UsageHelper.getTodayUsage(this@MainActivity)
+            val appList = UsageHelper.getAppUsageList(this@MainActivity)
             val weeklyData = WeeklyStatsHelper.getLast7DaysUsage(this@MainActivity)
             val dayLabels = WeeklyStatsHelper.getDayLabels()
             val lastWeekData   = WeeklyStatsHelper.getLastWeekUsage(this@MainActivity)
@@ -212,7 +242,7 @@ class MainActivity : AppCompatActivity() {
                 val hours = totalMinutes / 60
                 val mins = totalMinutes % 60
 
-
+Log.d("mins",totalMs.toString())
 
                 tvTime.text = if (hours > 0) "${hours}h ${mins}m screen time" else "${mins}m screen time"
                 tvFirstPickup.text = firstPickup
@@ -222,7 +252,7 @@ class MainActivity : AppCompatActivity() {
                     NotificationHelper.sendGoalExceededNotification(this@MainActivity, goalMinutes)
                 }
 
-           //     recycler.adapter = AppUsageAdapter(list)
+           //     recycler.adapter = AppUsageAdapter(list)                                                                                                                                                              swwaesv
                 setupChart(weeklyData, dayLabels)
 
 
@@ -296,6 +326,19 @@ class MainActivity : AppCompatActivity() {
 
                 updateWidget()
 
+    // ── Hide loader, show content with fade ──────────────
+    mainContent.alpha     = 0f
+    mainContent.visibility = View.VISIBLE
+    mainContent.animate()
+    .alpha(1f)
+    .setDuration(600)
+    .start()
+    loadingOverlay.animate()
+    .alpha(0f)
+    .setDuration(600)
+    .withEndAction { loadingOverlay.visibility = View.GONE }
+    .start()
+
                 // Trophy card — top productive app
                 topProductiveModel?.let { top ->
                     tvTopProductiveName.text = top.appName
@@ -325,6 +368,190 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+//    private fun loadUsageData() {
+//        // Show loading, hide content
+//        loadingOverlay.alpha= 1f
+//        loadingOverlay.visibility = View.VISIBLE
+//        mainContent.visibility    = View.GONE
+//
+//        // Rotate loading messages every second
+//        val handler  = android.os.Handler(mainLooper)
+//        val messages = LoadingMessages.messages
+//        var msgIndex = 0
+//
+//        val messageRunnable = object : Runnable {
+//            override fun run() {
+//                tvLoadingSubMessage.text = messages[msgIndex % messages.size]
+//                msgIndex++
+//                handler.postDelayed(this, 1000)
+//            }
+//        }
+//        handler.post(messageRunnable)
+//
+//        lifecycleScope.launch(Dispatchers.IO) {
+//
+//            // ── Load ALL data in background ──────────────────────────
+//            val appList     = UsageHelper.getAppUsageList(this@MainActivity)
+//            val totalMs     = UsageHelper.getTodayUsage(this@MainActivity)
+//            val weeklyData  = WeeklyStatsHelper.getLast7DaysUsage(this@MainActivity)
+//            val dayLabels   = WeeklyStatsHelper.getDayLabels()
+//            val lastWeekData = WeeklyStatsHelper.getLastWeekUsage(this@MainActivity)
+//            val firstPickup = UsageHelper.getFirstPickupTime(this@MainActivity)
+//            val screenFree  = UsageHelper.getScreenFreeTime(this@MainActivity, totalMs)
+//
+//            var totalProductiveMs   = 0L
+//            var totalEntertainingMs = 0L
+//            var totalOtherMs        = 0L
+//
+//            var topProductiveModel:   AppUsageModel? = null
+//            var topEntertainingModel: AppUsageModel? = null
+//
+//            val productiveList   = ArrayList<AppUsageModel>()
+//            val entertainingList = ArrayList<AppUsageModel>()
+//            val list             = ArrayList<AppUsageModel>()
+//
+//            for (info in appList) {
+//                val icon     = UsageHelper.getAppIcon(this@MainActivity, info.packageName)
+//                val category = CategoryHelper.getCategory(this@MainActivity, info.packageName)
+//                val model    = AppUsageModel(info.appName, info.usageTimeMs, icon, info.isInstalled, category)
+//
+//                list.add(model)
+//
+//                when (category) {
+//                    in productiveCategories -> {
+//                        productiveList.add(model)
+//                        totalProductiveMs += info.usageTimeMs
+//                        if (topProductiveModel == null ||
+//                            info.usageTimeMs > (topProductiveModel?.time ?: 0)) {
+//                            topProductiveModel = model
+//                        }
+//                    }
+//                    in entertainingCategories -> {
+//                        entertainingList.add(model)
+//                        totalEntertainingMs += info.usageTimeMs
+//                        if (topEntertainingModel == null ||
+//                            info.usageTimeMs > (topEntertainingModel?.time ?: 0)) {
+//                            topEntertainingModel = model
+//                        }
+//                    }
+//                    else -> {
+//                        entertainingList.add(model)
+//                        totalEntertainingMs += info.usageTimeMs
+//                        totalOtherMs += info.usageTimeMs
+//                    }
+//                }
+//            }
+//
+//            list.sortByDescending             { it.time }
+//            productiveList.sortByDescending   { it.time }
+//            entertainingList.sortByDescending { it.time }
+//
+//            val thisWeekAvg = WeeklyStatsHelper.getWeeklyAverage(weeklyData)
+//            val lastWeekAvg = WeeklyStatsHelper.getWeeklyAverage(lastWeekData)
+//
+//            // ── All data ready — update UI ───────────────────────────
+//            withContext(Dispatchers.Main) {
+//
+//                // Stop rotating messages
+//                handler.removeCallbacksAndMessages(null)
+//
+//                // Screen time text
+//                val totalMinutes = totalMs / (1000 * 60)
+//                val hours = totalMinutes / 60
+//                val mins  = totalMinutes % 60
+//                tvTime.text = if (hours > 0) "${hours}h ${mins}m screen time" else "${mins}m screen time"
+//
+//                // First pickup + screen free
+//                tvFirstPickup.text = firstPickup
+//                tvScreenFree.text  = screenFree
+//
+//                // Charts
+//                setupChart(weeklyData, dayLabels)
+//                setupPieChart(totalProductiveMs, totalEntertainingMs)
+//
+//                // Weekly comparison
+//                tvThisWeek.text = WeeklyStatsHelper.formatMinutes(thisWeekAvg)
+//                tvLastWeek.text = WeeklyStatsHelper.formatMinutes(lastWeekAvg)
+//                val diff = thisWeekAvg - lastWeekAvg
+//                when {
+//                    diff > 0 -> {
+//                        tvWeeklyArrow.text = "📈"
+//                        tvWeeklyDiff.text  = "+${WeeklyStatsHelper.formatMinutes(diff)}"
+//                        tvWeeklyDiff.setTextColor(getColor(R.color.bar_red))
+//                    }
+//                    diff < 0 -> {
+//                        tvWeeklyArrow.text = "📉"
+//                        tvWeeklyDiff.text  = "-${WeeklyStatsHelper.formatMinutes(-diff)}"
+//                        tvWeeklyDiff.setTextColor(getColor(R.color.bar_green))
+//                    }
+//                    else -> {
+//                        tvWeeklyArrow.text = "➡️"
+//                        tvWeeklyDiff.text  = "Same"
+//                        tvWeeklyDiff.setTextColor(getColor(android.R.color.darker_gray))
+//                    }
+//                }
+//
+//                // Points
+//                RewardHelper.calculateAndSavePoints(this@MainActivity, totalProductiveMs, totalEntertainingMs)
+//                val points = RewardHelper.getPoints(this@MainActivity)
+//                val badge  = RewardHelper.getBadge(points)
+//                val productiveMin   = totalProductiveMs   / (1000 * 60)
+//                val entertainingMin = totalEntertainingMs / (1000 * 60)
+//                tvPoints.text             = "⭐ $points points today"
+//                tvBadge.text              = badge
+//                tvProductivePoints.text   = if (points > 0) "+${productiveMin * 2} from productive" else "Need positive points to keep streak"
+//                tvEntertainingPoints.text = "-${entertainingMin} from entertaining"
+//
+//                // Streak
+//                StreakHelper.updateStreak(this@MainActivity, points)
+//                val currentStreak = StreakHelper.getStreak(this@MainActivity)
+//                val bestStreak    = StreakHelper.getBestStreak(this@MainActivity)
+//                tvStreak.text      = "$currentStreak days"
+//                tvStreakEmoji.text = StreakHelper.getStreakEmoji(currentStreak)
+//                tvBestStreak.text  = "$bestStreak days"
+//
+//                // Trophy card
+//                topProductiveModel?.let { top ->
+//                    tvTopProductiveName.text = top.appName
+//                    val m  = top.time / (1000 * 60)
+//                    val h  = m / 60; val r = m % 60
+//                    tvTopProductiveTime.text = if (h > 0) "${h}h ${r}m" else "${m}m"
+//                    top.icon?.let { ivTopProductiveIcon.setImageDrawable(it) }
+//                } ?: run { tvTopProductiveName.text = "No data" }
+//
+//                topEntertainingModel?.let { top ->
+//                    tvTopEntertainingName.text = top.appName
+//                    val m  = top.time / (1000 * 60)
+//                    val h  = m / 60; val r = m % 60
+//                    tvTopEntertainingTime.text = if (h > 0) "${h}h ${r}m" else "${m}m"
+//                    top.icon?.let { ivTopEntertainingIcon.setImageDrawable(it) }
+//                } ?: run { tvTopEntertainingName.text = "No data" }
+//
+//                // Goal check
+//                val goalMinutes = getGoalMinutes()
+//                if (totalMinutes >= goalMinutes) {
+//                    NotificationHelper.sendGoalExceededNotification(this@MainActivity, goalMinutes)
+//                }
+//
+//                // Widget
+//                updateWidget()
+//
+//                // ── Hide loader, show content with fade ──────────────
+//                mainContent.alpha     = 0f
+//                mainContent.visibility = View.VISIBLE
+//                mainContent.animate()
+//                    .alpha(1f)
+//                    .setDuration(600)
+//                    .start()
+//                loadingOverlay.animate()
+//                    .alpha(0f)
+//                    .setDuration(600)
+//                    .withEndAction { loadingOverlay.visibility = View.GONE }
+//                    .start()
+//            }
+//        }
+//    }
     private fun setupPieChart(productiveMs: Long, entertainingMs: Long) {
         val productiveMin   = (productiveMs   / (1000 * 60)).toFloat()
         val entertainingMin = (entertainingMs / (1000 * 60)).toFloat()

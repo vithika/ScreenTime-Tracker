@@ -1,5 +1,6 @@
 package com.example.screentimetracker;
 
+import android.app.AppOpsManager;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
@@ -44,12 +45,20 @@ public class UsageHelper {
     // ─── Permission Check ──────────────────────────────────────────────────────
 
     public static boolean hasUsagePermission(Context context) {
-        UsageStatsManager usm =
-                (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
-        long now = System.currentTimeMillis();
-        List<UsageStats> stats = usm.queryUsageStats(
-                UsageStatsManager.INTERVAL_DAILY, now - 1000, now);
-        return stats != null && !stats.isEmpty();
+
+        AppOpsManager appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                context.getPackageName()
+        );
+        return mode == AppOpsManager.MODE_ALLOWED;
+//        UsageStatsManager usm =
+//                (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+//        long now = System.currentTimeMillis();
+//        List<UsageStats> stats = usm.queryUsageStats(
+//                UsageStatsManager.INTERVAL_DAILY, now - 1000, now);
+//        return stats != null && !stats.isEmpty();
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -109,7 +118,7 @@ public class UsageHelper {
     // ─── Public API ───────────────────────────────────────────────────────────
 
     public static long getTodayUsage(Context context) {
-        if (!hasUsagePermission(context)) return -1L;
+
 
         List<AppUsageInfo> list = getAppUsageList(context);
         long total = 0;
