@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/loadingOverlay"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#F5F5F5"
+    android:visibility="visible">
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:indeterminateTint="#4CAF50"/>
+
+    <TextView
+        android:id="@+id/tvLoadingMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Loading your screen time..."
+        android:textSize="16sp"
+        android:textColor="#888888"
+        android:layout_marginTop="16dp"/>
+
+    <TextView
+        android:id="@+id/tvLoadingSubMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Analysing app usage..."
+        android:textSize="13sp"
+        android:textColor="#BBBBBB"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>
