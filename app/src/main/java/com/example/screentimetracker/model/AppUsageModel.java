@@ -23,5 +23,6 @@ public class AppUsageModel {
 
     public String getAppName() { return appName; }
     public long getTime() { return time; }
+
 }
 
